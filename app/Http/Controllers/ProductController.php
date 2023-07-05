@@ -2,37 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Repositories\ProductRepository;
+use App\Http\Repositories\ProductRepositoryInterface;
 use App\Http\Requests\Product\StoreRequest;
 use App\Http\Requests\Product\UpdateRequest;
-use App\Models\Product;
-use Illuminate\Http\Request;
+
+
 
 class ProductController extends Controller
-{
+{   
+    protected ProductRepository $productRepo;
+
+    public function __construct(ProductRepositoryInterface $productRepository)
+    {
+        $this->productRepo = $productRepository; 
+    }
+
     public function index()
     {
-        $products = Product::all();
+        $products = $this->productRepo->getProduct();
 
         return response()->json($products);
     }
 
     public function show(int $id)
     {
-        $product = Product::findOrFail($id);
+        $products = $this->productRepo->getProductById($id);
 
-        return response()->json($product);
+        return response()->json($products);
     }
 
     public function store(StoreRequest $request)
     {
         $form = $request ->only(['name','description','price']);
 
-        $product = new Product;
-        $product->name = $form['name'];
-        $product->description = $form['description'];
-        $product->price = $form['price'];
 
-        $product->save();
+        $product = $this->productRepo->createProduct($form);
 
         return response()->json($product);
     }
@@ -41,7 +46,7 @@ class ProductController extends Controller
     {
         $form = $request ->only(['name','description','price']);
 
-        $product = Product::findOrFail($id);
+        // $product = Product::findOrFail($id);
         // $product = Product::find(1);
 
         // 1 update v 1 (คิมทำ)
@@ -50,7 +55,9 @@ class ProductController extends Controller
         // $product->price = $form['price'];
 
         // 2 update v 2 (พี่ทิวทำ)
-        $product->update($form);
+        // $product->update($form);
+
+        $product = $this->productRepo->updateProductById($id,$form);
 
         return response()->json($product);
     }
@@ -62,7 +69,9 @@ class ProductController extends Controller
         // $product->delete();
 
         // delete v2 (พี่ทิวทำ)
-        Product::destroy($id);
+        // Product::destroy($id);
+
+        $this->productRepo->deleteProductById($id);
 
         return response()->noContent();
     }
